@@ -1,0 +1,11 @@
+#+TITLE: Python module for Kanseki Repository
+
+* Overview
+
+This module provides programmatic access to the Kanseki Repository.  This access has to parts:
+
+ - Access to the Kanseki Repository API, see
+   https://www.kanripo.org/api for details.
+ - Interact with the Kanseki Repository user workspace and text files
+   on Github
+
