@@ -26,3 +26,44 @@ restext = kanripo.get_result_file(loc)
 
 ** Working with the files on Github
 
+#+BEGIN_SRC python
+import kanripo
+  # also need the Github module, which is a requirement for kanripo as well
+from github import Github
+  # I usually have the token in the environment, but you can use
+  # whatever way to transmit the token. Authentication can also be done
+  # with user and password
+gh = Github(os.environ.get('GHTOKEN'))
+# now we can fork a text to our account
+repo=kanripo.get_or_fork_text(gh, "KR5c0126")
+# we can also add a new branch to our forked version  (verify on Github that this actually worked!)
+b=kanripo.create_branch(gh, "KR5c0126", "annotations")
+
+#+END_SRC
+
+We can also get the users' workspace on Github, which is a place to
+store information the user generated while interacting with the
+Kanseki Repositories.  All applications are encouraged to make use of
+this mechanism.  Settings come in two flavours: "global.cfg" for
+settings relevant to all applications and <application>.cfg for each
+application to store their own information.
+
+#+BEGIN_SRC python
+ws=kanripo.get_workspace(gh)
+print ws.get_dir_contents(".")
+# get the settings, global.cfg is the default
+settings=kanripo.get_user_settings(gh).split("\n")
+# for demonstration purposes, we will append something and then save the settings again
+settings.append("KR5c0126=krptest/KR5c0126/annotations")
+ret=kanripo.set_user_settings(gh, cfg="global.cfg", new_content="\n".join(settings))
+#+END_SRC
+
+And finally, we can make a change to a file and save it back.
+#+BEGIN_SRC python
+# this is using the text forked above
+loc="KR5c0126_001"
+textfile=loc.split(":")[0]+".txt"
+c=kanripo.get_result_file(loc)
+d=c.replace("#+DATE: 2016-08-10", "#+DATE: 2018-05-21")
+kanripo.save_text(gh, textfile, d)
+#+END_SRC
