@@ -7,7 +7,7 @@ from github import Github
 from github import UnknownObjectException
 
 apiappend = ""
-krp_base = ""
+krp_base = "https://www.kanripo.org/"
 krp_api  = "%s/api/v1.0/" % (krp_base)
 kanripo   = "kanripo"
 ghkrp    = "https://raw.githubusercontent.com/%s/%s/%s/%s.txt"
@@ -34,14 +34,37 @@ def _loadtitles(ghuser=kanripo):
 
 def _krpapicall(querystring):
     global apiappend
-    url = krp_base+"/"+querystring+apiappend
-    response = apisession.get(krp_base+"/"+querystring+apiappend).text
+    url = krp_api+"/"+querystring+apiappend
+    response = apisession.get(url).text
     return response
 
 
 def searchtexts(key):
     return _krpapicall("search?query="+key)
 
+def get_result_file(location, gh=None):
+    """This retrieves the textfile that matches the location. Location is a location returned from the search results or a textfile name from a KR text."""
+    textfile=location.split(":")[0]
+    text = textfile[0:8]
+    if gh:
+        ghuser = gh.get_user()
+        try:
+            repo = ghuser.get_repo(text)
+        except (UnknownObjectException):
+            repo = gh.get_repo("%s/%s" % (kanripo, text))
+        try:
+            c = repo.get_contents("/%s.txt" % (textfile))
+        except:
+            return None
+        return c.decoded_content
+    else:
+        #TODO: get branch from variants at the end of location if available
+        branch = "master"
+        url=ghkrp % (kanripo, text, branch, textfile)
+        #print url
+        response = apisession.get(url).text
+        return response
+    
 # interact with the github user workspace
 
 def get_workspace(gh, source="kanripo"):
@@ -84,8 +107,9 @@ def set_user_settings(gh, cfg=None, new_content=None, message=None, create=True)
         ret = "File and/or content not given."
     return ret
 
-def fork_text(gh, text, source="kanripo"):
-    """Fork a text to the users account. If no source is given, use
+def get_or_fork_text(gh, text, source="kanripo"):
+    """Get a text from the users' account. If the text does not exist,
+fork the text to the users account. If no source is given, use
 @kanripo. 'gh' is an authenticated Github object."""
     ghuser = gh.get_user()
     try:
@@ -98,7 +122,7 @@ def fork_text(gh, text, source="kanripo"):
     return repo
 
 def create_branch(gh, text=None, new_branch=None, source_branch='master'):
-    if text and newbranch:
+    if text and new_branch:
         ghuser = gh.get_user()
         repo = ghuser.get_repo(text)
         sb = repo.get_branch(source_branch)
@@ -112,9 +136,12 @@ def save_text(gh, text_file, new_content, branch='master', message=None):
 updated is given as 'text_file', the new content of the file a
 'new_content'. If no branch is given, update 'master'."""
     text = text_file.split("_")[0]
-    path = "%s/%s" % (text, text_file)
+    path = "/%s/%s" % (text, text_file)
     ghuser = gh.get_user()
-    repo = ghuser.get_repo(text)
+    try:
+        repo = ghuser.get_repo(text)
+    except (UnknownObjectException):
+        return "Text %s not found in %s account." % (text, ghuser.login)
     sb = repo.get_branch(branch)
     sha = repo.get_contents(path, ref=branch).sha
     if not message:

@@ -2,10 +2,27 @@
 
 * Overview
 
-This module provides programmatic access to the Kanseki Repository.  This access has to parts:
+This module (tested and developed with Python 2.7.) provides
+programmatic access to the Kanseki Repository.  The access has to
+parts:
 
  - Access to the Kanseki Repository API, see
    https://www.kanripo.org/api for details.
  - Interact with the Kanseki Repository user workspace and text files
    on Github
+** Kanseki Repository API
+
+#+BEGIN_SRC python
+import kanripo
+res=kanripo.searchtexts(u"時間")
+# get the number of matches
+print len(res.split("\n"))
+# lets look at the first result (Note: The results start out with a blank line:-)
+res1 = res.split("\n")[1]
+kwic, loc = res1.split("\t", 1)
+#now retrieve the contents of the resulting file
+restext = kanripo.get_result_file(loc)
+#+END_SRC
+
+** Working with the files on Github
 
