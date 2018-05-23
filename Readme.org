@@ -67,4 +67,3 @@ c=kanripo.get_result_file(loc)
 d=c.replace("#+DATE: 2016-08-10", "#+DATE: 2018-05-21")
 kanripo.save_text(gh, textfile, d)
 #+END_SRC
-## UPDATE 2018-05-21:  It seems that this last function still has an unsolved problem, so please have some patience!
