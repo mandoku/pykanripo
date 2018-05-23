@@ -136,13 +136,12 @@ def save_text(gh, text_file, new_content, branch='master', message=None):
 updated is given as 'text_file', the new content of the file a
 'new_content'. If no branch is given, update 'master'."""
     text = text_file.split("_")[0]
-    path = "/%s/%s" % (text, text_file)
+    path = "/%s" % (text_file)
     ghuser = gh.get_user()
     try:
         repo = ghuser.get_repo(text)
     except (UnknownObjectException):
         return "Text %s not found in %s account." % (text, ghuser.login)
-    sb = repo.get_branch(branch)
     sha = repo.get_contents(path, ref=branch).sha
     if not message:
         message = "Updating %s." % (text_file)
