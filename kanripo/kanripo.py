@@ -1,4 +1,5 @@
 #   -*- coding: utf-8 -*-
+from __future__ import print_function
 import requests
 import json
 import re
@@ -77,7 +78,7 @@ def search_multiple(keys, max_distance=100):
             try:
                 t1=res[k][i].split("\t")[1]
             except:
-                print "problem:", res[k][i]
+                print ("problem:", res[k][i])
                 continue
             tx = t1.split(":")[0]
             no = int(t1.split("$")[-1])

@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='kanripo',
-      version='0.1',
+      version='0.31',
       description='Access to the kanripo API.',
       url='http://github.com/mandoku/kanripo',
       author='Christian Wittern',
