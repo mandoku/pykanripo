@@ -6,6 +6,8 @@ import re
 from github import Github
 from github import UnknownObjectException
 
+from collections import defaultdict
+
 apiappend = ""
 krp_base = "https://www.kanripo.org/"
 krp_api  = "%s/api/v1.0/" % (krp_base)
@@ -38,9 +40,71 @@ def _krpapicall(querystring):
     response = apisession.get(url).text
     return response
 
+def _get_title(textid):
+    if len(titles) == 0:
+        _loadtitles()
+    if titles.has_key(textid):
+        return titles[textid]
+    else:
+        return "No title"
 
-def searchtexts(key):
-    return _krpapicall("search?query="+key)
+def searchtexts(key, with_titles=False):
+    res=_krpapicall("search?query="+key)
+    out = []
+    for line in res.split("\n"):
+        l = line.split("\t", 1)
+        if "_" in line:
+            l0 = l[0].split(",")
+            l[0] = "%s%s%s" % (l0[1], key[0], l0[0])
+            if with_titles:
+                title = _get_title(l[1].split("_")[0])
+                out.append("\t".join((l[0], title, l[1])))
+            else:
+                out.append("\t".join((l[0], l[1])))
+    return out
+
+def search_multiple(keys, max_distance=100):
+    res={}
+    txs = defaultdict(lambda: defaultdict(list))
+    found = []
+    ret = []
+    # search
+    for key in keys:
+        res[key] = searchtexts(key)
+    # invert the data by text
+    for k in res.keys():
+        for i in range(0, len(res[k])):
+            try:
+                t1=res[k][i].split("\t")[1]
+            except:
+                print "problem:", res[k][i]
+                continue
+            tx = t1.split(":")[0]
+            no = int(t1.split("$")[-1])
+            txs[tx][k].append((no, i))
+    # find those that have the match within the required distance
+    for tx in txs:
+#        if len(txs[tx].keys()) >= len(keys):
+        # this assumes len(keys) == 2
+        if len(txs[tx].keys()) > 1:
+            ks = txs[tx].items()
+            # we use the key with the smallest number of hits for a loop 
+            a = min(ks, key=lambda x: len(x[1]))
+            for ano in a[1]:
+                for b in txs[tx].keys():
+                    if b != a[0]:
+                        #print b, a
+                        for bno in txs[tx][b]:
+                            if abs(ano[0] - bno[0]) < max_distance:
+                                if ano[0] < bno[0]:
+                                    found.append((tx, a[0], ano, b, bno))
+                                else:
+                                    found.append((tx, b, bno, a[0], ano))
+                                break
+    for f in found:
+        # now we call the lines from the results and return
+        ret.append((res[f[1]][f[2][1]], res[f[3]][f[4][1]]))
+    return ret
 
 def get_result_file(location, gh=None):
     """This retrieves the textfile that matches the location. Location is a location returned from the search results or a textfile name from a KR text."""
